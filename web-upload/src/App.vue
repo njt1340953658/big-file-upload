@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; justify-content: space-between">
-    <Input id="file" type="file" @change="onChange" style="width: 300px" />
+    <Input multiple id="file" type="file" @change="onChange" style="width: 300px" />
     <div>
       <Button @click="handleUpload" type="primary">点击上传</Button>
 

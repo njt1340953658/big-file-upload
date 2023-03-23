@@ -1,13 +1,11 @@
 import axios from "axios";
-// import Cookies from 'js-cookie'
 import { createFileChunk, getHash } from './getHash'
 import { message } from "ant-design-vue";
 
-const request = async (httpApi, params = {}, method) => {
-  const methodParmas = method?.toLocaleLowerCase() === 'get' ? { params: params } : params
-  console.log(methodParmas)
+const request = async (httpApi, params = {}, method = 'get') => {
+  const methodParmas = method.toLocaleLowerCase() === 'get' ? { params: {...params} } : params
   try {
-    const res = await axios[method || 'get'](httpApi, methodParmas)
+    const res = await axios[method](httpApi, methodParmas)
     if (res.data.code === 1) return res.data
     message.error(res.data.message);
   } catch (error) {
@@ -47,14 +45,14 @@ class Upload {
     const hashRes = await getHash(this.currentFile, this.SIZE, callBack);
     if (!hashRes.code) return message.error(hashRes.message);
     const res = await request(this.uploadApi.checkApi, { hash: hashRes.hash });
-    if (res.code === 1) return message.success("上传成功，该文件已经上传过");
-    if (res.code === 2) {
+    if (res?.code === 1) return message.success("上传成功，该文件已经上传过");
+    if (res?.code === 2) {
       const { index } = res;
       this.startIndex = index;
       this.dataSource = [];
     }
     this.dataSource = [];
-    const fileChunkList = createFileChunk(this.currentFile, SIZE);
+    const fileChunkList = createFileChunk(this.currentFile, this.SIZE);
     this.fileChunkData = fileChunkList.map((fileChunk, index) => ({
       chunk: fileChunk.file,
       hash: hashRes.hash + "-" + index,
