@@ -1,53 +1,38 @@
-import SparkMD5 from "spark-md5";
+import MyWorker from "./worker.js?worker";
 
-// 计算文件hash值
+const worker = new MyWorker();
+
 export const getHash = (file, SIZE, callback) => {
-  const blobSlice =
-    File.prototype.slice ||
-    File.prototype.mozSlice ||
-    File.prototype.webkitSlice;
-
-  const chunkSize = SIZE;
-
-  const chunks = Math.ceil(file.size / chunkSize);
-
-  let currentChunk = 0;
-
-  const spark = new SparkMD5.ArrayBuffer();
-
-  const fileReader = new FileReader();
-
-  function loadNext() {
-    var start = currentChunk * chunkSize,
-      end = start + chunkSize >= file.size ? file.size : start + chunkSize;
-    fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
-  }
+  worker.postMessage({ file, SIZE });
 
   const promise = new Promise((resolve) => {
-    fileReader.onload = function (e) {
-      const progress = ((currentChunk + 1) / chunks) * 100;
-      console.log(progress, 'fileReader-start');
-      callback(progress);
-      console.log("read chunk nr", currentChunk + 1, "of", chunks);
-      spark.append(e.target.result); // Append array buffer
-      currentChunk++;
-
-      if (currentChunk < chunks) {
-        loadNext();
-      } else {
-        console.log("finished loading");
-        const hash = spark.end();
-        console.info("computed hash", hash); // Compute hash
-        resolve({ code: 1, hash });
+    worker.onmessage = (event) => {
+      const data = event.data;
+      switch (data.type) {
+        case "progress":
+          callback(data.progress);
+          break;
+        case "result":
+          worker.terminate();
+          callback(100);
+          resolve(data);
+          break;
+        default:
+          resolve(data);
+          break;
       }
     };
-
-    fileReader.onerror = function () {
-      console.warn("oops, something went wrong.");
-      resolve({ code: 0, message: "oops, something went wrong." });
-    };
   });
-
-  loadNext();
   return promise;
+};
+
+// 文件分片
+export const createFileChunk = (file, size) => {
+  const fileChunkList = [];
+  let current = 0;
+  while (current < file.size) {
+    fileChunkList.push({ file: file.slice(current, current + size) });
+    current += size;
+  }
+  return fileChunkList;
 };
