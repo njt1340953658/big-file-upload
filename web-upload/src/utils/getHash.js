@@ -1,8 +1,9 @@
 import MyWorker from "./worker.js?worker";
 
-const worker = new MyWorker();
-
 export const getHash = (file, SIZE, callback) => {
+
+  const worker = new MyWorker();
+
   worker.postMessage({ file, SIZE });
 
   const promise = new Promise((resolve) => {
@@ -34,5 +35,6 @@ export const createFileChunk = (file, size) => {
     fileChunkList.push({ file: file.slice(current, current + size) });
     current += size;
   }
+  console.log(fileChunkList, 'fileChunkList')
   return fileChunkList;
 };

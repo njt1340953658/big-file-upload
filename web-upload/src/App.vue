@@ -8,10 +8,19 @@
       <Button style="margin-left: 20px" @click="handleStartUpload" type="primary">继续上传</Button>
     </div>
   </div>
-  校验文件进度
-  <a-progress v-if="hashProgress" :percent="hashProgress" />
-  上传文件进度
-  <a-progress v-if="totalProgress" :percent="totalProgress" />
+  <div v-if="hashProgress && hashProgress !== 100" style="display: flex; height: 80px; align-items: center;">
+    <Space style="width: 80px; display: block;">
+      <Spin tip="文件校验中" size="small">
+        <div className="content" />
+      </Spin>
+    </Space>
+    <div style="margin-left: 12px;">{{ hashProgress + '%' }}</div>
+  </div>
+
+  <template v-if="totalProgress">
+    上传文件进度
+    <a-progress :percent="totalProgress" />
+  </template>
   <a-table :dataSource="dataSource" :columns="columns">
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'progress'">
@@ -21,7 +30,7 @@
 </template>
 
 <script setup>
-import { Button, Input } from "ant-design-vue";
+import { Button, Input, Space, Spin } from "ant-design-vue";
 import { ref } from "vue";
 import Upload from './utils/upload'
 
@@ -55,7 +64,7 @@ const dataSource = ref([]);
 // 文件上传的总进度
 const totalProgress = ref(0);
 // 获取文件hash值的进度
-const hashProgress  = ref(0);
+const hashProgress = ref(0);
 
 const onChange = (e) => {
   const [file] = e.target.files;
@@ -66,7 +75,7 @@ const handleUpload = () => {
   uploader.handleUpload((option) => {
     dataSource.value = [...option.dataSource]
     hashProgress.value = option.hashProgress || 0
-    totalProgress.value = option.totalProgress || 0
+    totalProgress.value = option.uploadProgress || 0
   })
 }
 
@@ -75,6 +84,10 @@ const handleStopUpload = () => {
 }
 
 const handleStartUpload = () => {
-  uploader.handleStartUpload()
+  uploader.handleStartUpload((option) => {
+    dataSource.value = [...option.dataSource]
+    hashProgress.value = option.hashProgress || 0
+    totalProgress.value = option.uploadProgress || 0
+  })
 }
 </script>
