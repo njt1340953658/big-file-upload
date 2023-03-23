@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; justify-content: space-between">
-    <Input multiple id="file" type="file" @change="onChange" style="width: 300px" />
+    <Input id="file" type="file" @change="onChange" style="width: 300px" />
     <div>
       <Button @click="handleUpload" type="primary">点击上传</Button>
 
@@ -9,8 +9,9 @@
     </div>
   </div>
   校验文件进度
-  <a-progress v-if="hashProgress > 0" :percent="hashProgress" />
-  <a-progress v-if="fileChunkData.length > 0" :percent="totalProgress" />
+  <a-progress v-if="hashProgress" :percent="hashProgress" />
+  上传文件进度
+  <a-progress v-if="totalProgress" :percent="totalProgress" />
   <a-table :dataSource="dataSource" :columns="columns">
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'progress'">
@@ -21,7 +22,7 @@
 
 <script setup>
 import { Button, Input } from "ant-design-vue";
-import { ref, computed, reactive } from "vue";
+import { ref } from "vue";
 import Upload from './utils/upload'
 
 // 切片大小
@@ -41,7 +42,7 @@ const columns = [
   },
 ];
 
-const upload = new Upload({
+const uploader = new Upload({
   SIZE,
   currentFile: null,
   httpApi: "/api/upload",
@@ -49,10 +50,6 @@ const upload = new Upload({
   checkApi: "/api/checkFileIsUploaded",
 })
 
-const uploader = reactive(upload)
-
-// 文件切分之后的chunk数组
-const fileChunkData = ref([]);
 //  table数据源
 const dataSource = ref([]);
 // 文件上传的总进度
@@ -66,7 +63,11 @@ const onChange = (e) => {
 };
 
 const handleUpload = () => {
-  uploader.handleUpload((parent) => hashProgress.value = parseInt(parent))
+  uploader.handleUpload((option) => {
+    dataSource.value = [...option.dataSource]
+    hashProgress.value = option.hashProgress || 0
+    totalProgress.value = option.totalProgress || 0
+  })
 }
 
 const handleStopUpload = () => {
@@ -76,17 +77,4 @@ const handleStopUpload = () => {
 const handleStartUpload = () => {
   uploader.handleStartUpload()
 }
-
-
-// watch(() => uploader.totalProgress, (value) => {
-//   totalProgress.value = value;
-// });
-
-// watch(() => uploader.dataSource, (value) => {
-//   dataSource.value = value;
-// })
-
-// watch(() => uploader.fileChunkData, (value) => {
-//   fileChunkData.value = value;
-// })
 </script>
