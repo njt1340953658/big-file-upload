@@ -75,7 +75,7 @@ const uploadFinishedNum = ref(0)
 const onChange = (e) => {
   const filesList = [...e.target.files];
   uploadInstance.value = new FileUpload({ ...options, filesList })
-  filesList.map(item => dataSource.value.push({ name: item.name }))
+  filesList.forEach(item => dataSource.value.push({ name: item.name }))
 };
 
 const handleUpload = () => {
