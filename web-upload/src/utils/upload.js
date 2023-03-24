@@ -174,7 +174,7 @@ class FileUpload {
     this.currentUploadIndex = -1
   }
 
-  handleUpload = async (callBack) => {
+  upload = async (callBack) => {
     try {
       while (this.currentUploadIndex < this.filesList.length - 1) {
         this.currentUploadIndex++
@@ -185,13 +185,13 @@ class FileUpload {
     }
   }
 
-  handleStopUpload = () => {
+  stopUpload = () => {
     this.filesList.forEach((uploadInstance) => {
       uploadInstance.handleStopUpload()
     })
   }
 
-  handleStartUpload = (callBack) => {
+  startUpload = (callBack) => {
     this.filesList.forEach((uploadInstance) => {
       uploadInstance.handleStartUpload(callBack)
     })

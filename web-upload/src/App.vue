@@ -79,15 +79,15 @@ const onChange = (e) => {
 };
 
 const handleUpload = () => {
-  uploadInstance.value.handleUpload?.(updateDataSource);
+  uploadInstance.value.upload?.(updateDataSource);
 }
 
 const handleStopUpload = () => {
-  uploadInstance.value.handleStopUpload?.()
+  uploadInstance.value.stopUpload?.()
 }
 
 const handleStartUpload = () => {
-  uploadInstance.value.handleStartUpload?.(updateDataSource)
+  uploadInstance.value.startUpload?.(updateDataSource)
 }
 
 const updateDataSource = (files) => {
