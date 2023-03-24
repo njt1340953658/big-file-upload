@@ -34,13 +34,12 @@ self.addEventListener("message", (event) => {
       loadNext();
     } else {
       const hash = spark.end();
-      console.info("computed hash", hash); // Compute hash
       self.postMessage({ type: "result", code: 1, hash });
     }
   };
 
   fileReader.onerror = function () {
-    console.warn("oops, something went wrong.");
+    console.error("oops, something went wrong.");
     self.postMessage({
       type: "result",
       code: 0,

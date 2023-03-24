@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; justify-content: space-between">
-    <Input id="file" type="file" @change="onChange" style="width: 300px" />
+    <Input multiple id="file" type="file" @change="onChange" style="width: 300px" />
     <div>
       <Button @click="handleUpload" type="primary">点击上传</Button>
 
@@ -16,11 +16,7 @@
     </Space>
     <div style="margin-left: 12px;">{{ hashProgress + '%' }}</div>
   </div>
-
-  <template v-if="totalProgress">
-    上传文件进度
-    <a-progress :percent="totalProgress" />
-  </template>
+  <div>待上传文件：{{ dataSource.length - uploadFinishedNum }}</div>
   <a-table :dataSource="dataSource" :columns="columns">
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'progress'">
@@ -30,17 +26,30 @@
 </template>
 
 <script setup>
-import { Button, Input, Space, Spin } from "ant-design-vue";
 import { ref } from "vue";
-import Upload from './utils/upload'
+import FileUpload from './utils/upload'
+import { Button, Input, Space, Spin } from "ant-design-vue";
 
 // 切片大小
 const SIZE = 50 * 1024 * 1024;
 
+const options = {
+  SIZE,
+  filesList: [],
+  httpApi: "/api/upload",
+  mergeApi: "/api/merge",
+  checkApi: "/api/checkFileIsUploaded",
+}
+
 // table配置
 const columns = [
   {
-    title: "分片名",
+    title: "名称",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "校验hash",
     dataIndex: "hash",
     key: "hash",
   },
@@ -51,43 +60,47 @@ const columns = [
   },
 ];
 
-const uploader = new Upload({
-  SIZE,
-  currentFile: null,
-  httpApi: "/api/upload",
-  mergeApi: "/api/merge",
-  checkApi: "/api/checkFileIsUploaded",
-})
-
 //  table数据源
 const dataSource = ref([]);
-// 文件上传的总进度
-const totalProgress = ref(0);
+
 // 获取文件hash值的进度
 const hashProgress = ref(0);
 
+// 初始化上传实例对象
+const uploadInstance = ref({})
+
+// 上传完成的文件数量
+const uploadFinishedNum = ref(0)
+
 const onChange = (e) => {
-  const [file] = e.target.files;
-  uploader.currentFile = file
+  const filesList = [...e.target.files];
+  uploadInstance.value = new FileUpload({ ...options, filesList })
+  filesList.map(item => dataSource.value.push({ name: item.name }))
 };
 
 const handleUpload = () => {
-  uploader.handleUpload((option) => {
-    dataSource.value = [...option.dataSource]
-    hashProgress.value = option.hashProgress || 0
-    totalProgress.value = option.uploadProgress || 0
-  })
+  uploadInstance.value.handleUpload?.(updateDataSource);
 }
 
 const handleStopUpload = () => {
-  uploader.handleStopUpload()
+  uploadInstance.value.handleStopUpload?.()
 }
 
 const handleStartUpload = () => {
-  uploader.handleStartUpload((option) => {
-    dataSource.value = [...option.dataSource]
-    hashProgress.value = option.hashProgress || 0
-    totalProgress.value = option.uploadProgress || 0
+  uploadInstance.value.handleStartUpload?.(updateDataSource)
+}
+
+const updateDataSource = (files) => {
+  hashProgress.value = files.hashProgress || 0
+  dataSource.value.map((item, fileIndex) => {
+    if (item.name === files.name) {
+      dataSource.value[fileIndex].hash = files.curFileHash
+      dataSource.value[fileIndex].progress = files.uploadProgress
+      if (files.uploadProgress === 100) {
+        uploadFinishedNum.value += 1
+      }
+    }
   })
+  
 }
 </script>

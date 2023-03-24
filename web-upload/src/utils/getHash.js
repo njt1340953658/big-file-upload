@@ -35,6 +35,5 @@ export const createFileChunk = (file, size) => {
     fileChunkList.push({ file: file.slice(current, current + size) });
     current += size;
   }
-  console.log(fileChunkList, 'fileChunkList')
   return fileChunkList;
 };
